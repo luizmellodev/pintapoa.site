@@ -1,21 +1,51 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { PlusCircle, Edit, Trash2, ArrowLeft, MapPin, Calendar, Clock, LogOut, Compass, Settings } from "lucide-react"
-import Link from "next/link"
-import { useSession, signOut } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
-import { getAllLocations, addLocation, updateLocation, deleteLocation, updateEventStatus } from "@/lib/data"
-import type { EventLocation, EventStatus } from "@/lib/types"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  PlusCircle,
+  Edit,
+  Trash2,
+  ArrowLeft,
+  MapPin,
+  Calendar,
+  Clock,
+  LogOut,
+  Compass,
+  Settings,
+} from "lucide-react";
+import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  getAllLocations,
+  addLocation,
+  updateLocation,
+  deleteLocation,
+  updateEventStatus,
+} from "@/lib/data";
+import type { EventLocation, EventStatus } from "@/lib/types";
 
 // Portuguese translations for status options
 const statusOptions = {
@@ -23,18 +53,20 @@ const statusOptions = {
   active: "Ativo (Mostrar Localização Atual)",
   "see-you-soon": "Até Breve",
   ended: "Fim do Projeto",
-}
+};
 
 export default function AdminPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [locations, setLocations] = useState<EventLocation[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentStatus, setCurrentStatus] = useState<EventStatus>("waiting")
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [currentLocation, setCurrentLocation] = useState<EventLocation | null>(null)
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [locations, setLocations] = useState<EventLocation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentStatus, setCurrentStatus] = useState<EventStatus>("waiting");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<EventLocation | null>(
+    null
+  );
   const [formData, setFormData] = useState<Partial<EventLocation>>({
     name: "",
     address: "",
@@ -42,59 +74,66 @@ export default function AdminPage() {
     time: "",
     imageUrl: "",
     coordinates: "",
-  })
+  });
 
   // Check authentication status
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login")
+      router.push("/login");
     }
-  }, [status, router])
+  }, [status, router]);
 
   useEffect(() => {
     if (status === "authenticated") {
-      fetchData()
+      fetchData();
     }
-  }, [status])
+  }, [status]);
 
   const fetchData = async () => {
     try {
-      setLoading(true)
-      const allLocations = await getAllLocations()
-      setLocations(allLocations)
+      setLoading(true);
+      const allLocations = await getAllLocations();
+      setLocations(allLocations);
 
       // In a real app, you would fetch the current status from the server
       if (allLocations.length > 0) {
-        setCurrentStatus("active")
+        setCurrentStatus("active");
       } else {
-        setCurrentStatus("waiting")
+        setCurrentStatus("waiting");
       }
     } catch (error) {
-      console.error("Failed to fetch data:", error)
+      console.error("Failed to fetch data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleStatusChange = async (status: EventStatus) => {
     try {
-      await updateEventStatus(status)
-      setCurrentStatus(status)
+      await updateEventStatus(status);
+      setCurrentStatus(status);
     } catch (error) {
-      console.error("Failed to update status:", error)
+      console.error("Failed to update status:", error);
     }
-  }
+  };
 
   const handleAddLocation = async () => {
     try {
-      if (!formData.name || !formData.address || !formData.date || !formData.time) {
-        alert("Por favor, preencha todos os campos obrigatórios")
-        return
+      if (
+        !formData.name ||
+        !formData.address ||
+        !formData.date ||
+        !formData.time
+      ) {
+        alert("Por favor, preencha todos os campos obrigatórios");
+        return;
       }
 
       await addLocation({
@@ -105,9 +144,9 @@ export default function AdminPage() {
         time: formData.time || "",
         imageUrl: formData.imageUrl || "",
         coordinates: formData.coordinates || "",
-      })
+      });
 
-      setIsAddDialogOpen(false)
+      setIsAddDialogOpen(false);
       setFormData({
         name: "",
         address: "",
@@ -115,15 +154,15 @@ export default function AdminPage() {
         time: "",
         imageUrl: "",
         coordinates: "",
-      })
-      fetchData()
+      });
+      fetchData();
     } catch (error) {
-      console.error("Failed to add location:", error)
+      console.error("Failed to add location:", error);
     }
-  }
+  };
 
   const handleEditClick = (location: EventLocation) => {
-    setCurrentLocation(location)
+    setCurrentLocation(location);
     setFormData({
       name: location.name,
       address: location.address,
@@ -131,17 +170,22 @@ export default function AdminPage() {
       time: location.time,
       imageUrl: location.imageUrl,
       coordinates: location.coordinates,
-    })
-    setIsEditDialogOpen(true)
-  }
+    });
+    setIsEditDialogOpen(true);
+  };
 
   const handleUpdateLocation = async () => {
     try {
-      if (!currentLocation) return
+      if (!currentLocation) return;
 
-      if (!formData.name || !formData.address || !formData.date || !formData.time) {
-        alert("Por favor, preencha todos os campos obrigatórios")
-        return
+      if (
+        !formData.name ||
+        !formData.address ||
+        !formData.date ||
+        !formData.time
+      ) {
+        alert("Por favor, preencha todos os campos obrigatórios");
+        return;
       }
 
       await updateLocation({
@@ -152,36 +196,36 @@ export default function AdminPage() {
         time: formData.time || "",
         imageUrl: formData.imageUrl || "",
         coordinates: formData.coordinates || "",
-      })
+      });
 
-      setIsEditDialogOpen(false)
-      fetchData()
+      setIsEditDialogOpen(false);
+      fetchData();
     } catch (error) {
-      console.error("Failed to update location:", error)
+      console.error("Failed to update location:", error);
     }
-  }
+  };
 
   const handleDeleteClick = (location: EventLocation) => {
-    setCurrentLocation(location)
-    setIsDeleteDialogOpen(true)
-  }
+    setCurrentLocation(location);
+    setIsDeleteDialogOpen(true);
+  };
 
   const handleDeleteLocation = async () => {
     try {
-      if (!currentLocation) return
+      if (!currentLocation) return;
 
-      await deleteLocation(currentLocation.id)
-      setIsDeleteDialogOpen(false)
-      fetchData()
+      await deleteLocation(currentLocation.id);
+      setIsDeleteDialogOpen(false);
+      fetchData();
     } catch (error) {
-      console.error("Failed to delete location:", error)
+      console.error("Failed to delete location:", error);
     }
-  }
+  };
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false })
-    router.push("/login")
-  }
+    await signOut({ redirect: false });
+    router.push("/login");
+  };
 
   const container = {
     hidden: { opacity: 0 },
@@ -191,12 +235,12 @@ export default function AdminPage() {
         staggerChildren: 0.1,
       },
     },
-  }
+  };
 
   const item = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 },
-  }
+  };
 
   // Show loading state while checking authentication
   if (status === "loading" || status === "unauthenticated") {
@@ -204,7 +248,7 @@ export default function AdminPage() {
       <div className="flex min-h-screen items-center justify-center bg-black">
         <div className="w-8 h-8 rounded-full border-2 border-yellow-400/20 border-t-yellow-400 animate-spin"></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -218,11 +262,17 @@ export default function AdminPage() {
         >
           <div className="flex items-center">
             <Link href="/">
-              <Button variant="ghost" size="icon" className="mr-3 hover:bg-yellow-400/10 text-white">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="mr-3 hover:bg-yellow-400/10 text-white"
+              >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h1 className="text-2xl font-extralight tracking-wider yellow-text">Painel de Administração</h1>
+            <h1 className="text-2xl font-extralight tracking-wider yellow-text">
+              Painel de Administração
+            </h1>
           </div>
           <div className="flex items-center space-x-3">
             <span className="text-sm text-gray-400 hidden md:inline-block font-extralight">
@@ -253,7 +303,10 @@ export default function AdminPage() {
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="name" className="text-gray-300 font-extralight">
+                      <Label
+                        htmlFor="name"
+                        className="text-gray-300 font-extralight"
+                      >
                         Nome do Local
                       </Label>
                       <Input
@@ -266,7 +319,10 @@ export default function AdminPage() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="address" className="text-gray-300 font-extralight">
+                      <Label
+                        htmlFor="address"
+                        className="text-gray-300 font-extralight"
+                      >
                         Endereço
                       </Label>
                       <Textarea
@@ -281,7 +337,10 @@ export default function AdminPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="date" className="text-gray-300 font-extralight">
+                        <Label
+                          htmlFor="date"
+                          className="text-gray-300 font-extralight"
+                        >
                           Data
                         </Label>
                         <Input
@@ -294,7 +353,10 @@ export default function AdminPage() {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="time" className="text-gray-300 font-extralight">
+                        <Label
+                          htmlFor="time"
+                          className="text-gray-300 font-extralight"
+                        >
                           Horário
                         </Label>
                         <Input
@@ -308,20 +370,10 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="coordinates" className="text-gray-300 font-extralight">
-                        Coordenadas (opcional)
-                      </Label>
-                      <Input
-                        id="coordinates"
-                        name="coordinates"
-                        value={formData.coordinates}
-                        onChange={handleInputChange}
-                        placeholder="ex: 23°35'08.5\"S 46°39\'32.6\"W"
-                        className="bg-black/50 border-white/10 focus:border-yellow-400/50 text-white font-extralight font-mono"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="imageUrl" className="text-gray-300 font-extralight">
+                      <Label
+                        htmlFor="imageUrl"
+                        className="text-gray-300 font-extralight"
+                      >
                         URL da Imagem (opcional)
                       </Label>
                       <Input
@@ -342,8 +394,8 @@ export default function AdminPage() {
                     >
                       CANCELAR
                     </Button>
-                    <Button 
-                      onClick={handleAddLocation} 
+                    <Button
+                      onClick={handleAddLocation}
                       className="bg-transparent hover:bg-emerald-400/10 text-emerald-400 border border-emerald-400/30 rounded-none font-extralight tracking-wider"
                     >
                       ADICIONAR
@@ -369,16 +421,30 @@ export default function AdminPage() {
             <CardContent>
               <div className="grid gap-2">
                 <Label className="text-gray-300 font-extralight">
-                  Status Atual: <span className="text-orange-400">{statusOptions[currentStatus]}</span>
+                  Status Atual:{" "}
+                  <span className="text-orange-400">
+                    {statusOptions[currentStatus]}
+                  </span>
                 </Label>
-                <Select value={currentStatus} onValueChange={(value) => handleStatusChange(value as EventStatus)}>
+                <Select
+                  value={currentStatus}
+                  onValueChange={(value) =>
+                    handleStatusChange(value as EventStatus)
+                  }
+                >
                   <SelectTrigger className="bg-black/50 border-white/10 focus:ring-yellow-400/30 font-extralight">
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
                   <SelectContent className="glass border-yellow-400/10">
-                    <SelectItem value="waiting">{statusOptions.waiting}</SelectItem>
-                    <SelectItem value="active">{statusOptions.active}</SelectItem>
-                    <SelectItem value="see-you-soon">{statusOptions["see-you-soon"]}</SelectItem>
+                    <SelectItem value="waiting">
+                      {statusOptions.waiting}
+                    </SelectItem>
+                    <SelectItem value="active">
+                      {statusOptions.active}
+                    </SelectItem>
+                    <SelectItem value="see-you-soon">
+                      {statusOptions["see-you-soon"]}
+                    </SelectItem>
                     <SelectItem value="ended">{statusOptions.ended}</SelectItem>
                   </SelectContent>
                 </Select>
@@ -410,36 +476,51 @@ export default function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <p className="text-gray-400 font-extralight">Nenhuma localização adicionada ainda.</p>
+            <p className="text-gray-400 font-extralight">
+              Nenhuma localização adicionada ainda.
+            </p>
           </motion.div>
         ) : (
-          <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="space-y-6"
+          >
             {locations.map((location) => (
-              <motion.div 
-                key={location.id} 
-                variants={item} 
+              <motion.div
+                key={location.id}
+                variants={item}
                 className="border-l-2 border-emerald-400/30 pl-4 py-1"
               >
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                   <div className="mb-4 md:mb-0">
-                    <h3 className="text-lg font-extralight green-text mb-2">{location.name}</h3>
+                    <h3 className="text-lg font-extralight green-text mb-2">
+                      {location.name}
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <div className="flex items-start">
                           <MapPin className="h-4 w-4 text-orange-400 mr-2 mt-1 flex-shrink-0" />
-                          <p className="text-gray-400 font-extralight text-sm">{location.address}</p>
+                          <p className="text-gray-400 font-extralight text-sm">
+                            {location.address}
+                          </p>
                         </div>
                         <div className="flex items-start">
                           <Calendar className="h-4 w-4 text-yellow-400 mr-2 mt-1 flex-shrink-0" />
                           <p className="text-gray-400 font-extralight text-sm">
-                            {new Date(location.date).toLocaleDateString("pt-BR")}
+                            {new Date(location.date).toLocaleDateString(
+                              "pt-BR"
+                            )}
                           </p>
                         </div>
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-start">
                           <Clock className="h-4 w-4 text-emerald-400 mr-2 mt-1 flex-shrink-0" />
-                          <p className="text-gray-400 font-extralight text-sm">{location.time}</p>
+                          <p className="text-gray-400 font-extralight text-sm">
+                            {location.time}
+                          </p>
                         </div>
                         {location.coordinates && (
                           <div className="flex items-start">
@@ -453,7 +534,10 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="flex space-x-3">
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
                       <Button
                         variant="outline"
                         size="sm"
@@ -463,7 +547,10 @@ export default function AdminPage() {
                         <Edit className="h-4 w-4 mr-1" /> EDITAR
                       </Button>
                     </motion.div>
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
                       <Button
                         variant="destructive"
                         size="sm"
@@ -490,7 +577,10 @@ export default function AdminPage() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-name" className="text-gray-300 font-extralight">
+                <Label
+                  htmlFor="edit-name"
+                  className="text-gray-300 font-extralight"
+                >
                   Nome do Local
                 </Label>
                 <Input
@@ -502,7 +592,10 @@ export default function AdminPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-address" className="text-gray-300 font-extralight">
+                <Label
+                  htmlFor="edit-address"
+                  className="text-gray-300 font-extralight"
+                >
                   Endereço
                 </Label>
                 <Textarea
@@ -516,7 +609,10 @@ export default function AdminPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-date" className="text-gray-300 font-extralight">
+                  <Label
+                    htmlFor="edit-date"
+                    className="text-gray-300 font-extralight"
+                  >
                     Data
                   </Label>
                   <Input
@@ -529,7 +625,10 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-time" className="text-gray-300 font-extralight">
+                  <Label
+                    htmlFor="edit-time"
+                    className="text-gray-300 font-extralight"
+                  >
                     Horário
                   </Label>
                   <Input
@@ -542,7 +641,10 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-coordinates" className="text-gray-300 font-extralight">
+                <Label
+                  htmlFor="edit-coordinates"
+                  className="text-gray-300 font-extralight"
+                >
                   Coordenadas
                 </Label>
                 <Input
@@ -554,7 +656,10 @@ export default function AdminPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-imageUrl" className="text-gray-300 font-extralight">
+                <Label
+                  htmlFor="edit-imageUrl"
+                  className="text-gray-300 font-extralight"
+                >
                   URL da Imagem
                 </Label>
                 <Input
@@ -574,8 +679,8 @@ export default function AdminPage() {
               >
                 CANCELAR
               </Button>
-              <Button 
-                onClick={handleUpdateLocation} 
+              <Button
+                onClick={handleUpdateLocation}
                 className="bg-transparent hover:bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 rounded-none font-extralight tracking-wider"
               >
                 SALVAR
@@ -594,7 +699,8 @@ export default function AdminPage() {
             </DialogHeader>
             <div className="py-4">
               <p className="text-gray-300 font-extralight">
-                Tem certeza que deseja excluir "{currentLocation?.name}"? Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir "{currentLocation?.name}"? Esta
+                ação não pode ser desfeita.
               </p>
             </div>
             <DialogFooter>
@@ -617,5 +723,5 @@ export default function AdminPage() {
         </Dialog>
       </div>
     </main>
-  )
+  );
 }
