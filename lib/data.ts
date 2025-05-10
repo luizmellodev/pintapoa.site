@@ -1,153 +1,161 @@
 "use server"
 
 import type { EventLocation, EventStatus } from "./types"
-import { promises as fs } from "fs"
-import path from "path"
-import { isFirebaseEnabled } from "./firebase"
+import { db } from "./firebase"
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  setDoc,
+  Timestamp,
+  serverTimestamp,
+} from "firebase/firestore"
 
-// In a real application, this would be stored in a database
-// For this example, we'll use a JSON file
-const DATA_FILE_PATH = path.join(process.cwd(), "data.json")
-
-// Initialize the data file if it doesn't exist
-async function initDataFile() {
-  try {
-    await fs.access(DATA_FILE_PATH)
-  } catch (error) {
-    // File doesn't exist, create it with default data
-    const defaultData = {
-      status: "waiting",
-      locations: [],
-    }
-    await fs.writeFile(DATA_FILE_PATH, JSON.stringify(defaultData, null, 2))
-  }
-}
-
-// Read data from the file
-async function readData() {
-  await initDataFile()
-  const data = await fs.readFile(DATA_FILE_PATH, "utf8")
-  return JSON.parse(data)
-}
-
-// Write data to the file
-async function writeData(data: any) {
-  await fs.writeFile(DATA_FILE_PATH, JSON.stringify(data, null, 2))
-}
+// Collection references
+const STATUS_DOC = "status/current"
+const LOCATIONS_COLLECTION = "locations"
 
 // Get the current event status
 export async function getEventStatus(): Promise<EventStatus> {
-  if (isFirebaseEnabled) {
-    // Firebase implementation would go here
-    // return await getStatusFromFirebase();
-    throw new Error("Firebase is not yet implemented")
-  }
+  try {
+    const statusDoc = await getDoc(doc(db, STATUS_DOC))
 
-  const data = await readData()
-  return data.status || "waiting"
+    if (statusDoc.exists()) {
+      return statusDoc.data().status as EventStatus
+    }
+
+    // If no status document exists, create one with default "waiting" status
+    await setDoc(doc(db, STATUS_DOC), { status: "waiting" })
+    return "waiting"
+  } catch (error) {
+    console.error("Error getting event status:", error)
+    return "waiting" // Default fallback
+  }
 }
 
 // Update the event status
 export async function updateEventStatus(status: EventStatus): Promise<void> {
-  if (isFirebaseEnabled) {
-    // Firebase implementation would go here
-    // await updateStatusInFirebase(status);
-    throw new Error("Firebase is not yet implemented")
+  try {
+    await setDoc(doc(db, STATUS_DOC), {
+      status,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error("Error updating event status:", error)
+    throw new Error("Failed to update event status")
   }
-
-  const data = await readData()
-  data.status = status
-  await writeData(data)
 }
 
 // Get all locations
 export async function getAllLocations(): Promise<EventLocation[]> {
-  if (isFirebaseEnabled) {
-    // Firebase implementation would go here
-    // return await getLocationsFromFirebase();
-    throw new Error("Firebase is not yet implemented")
-  }
+  try {
+    const locationsQuery = query(collection(db, LOCATIONS_COLLECTION), orderBy("date", "desc"))
 
-  const data = await readData()
-  return data.locations || []
+    const snapshot = await getDocs(locationsQuery)
+
+    return snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        name: data.name,
+        address: data.address,
+        date: data.date.toDate().toISOString().split("T")[0], // Convert Firestore Timestamp to YYYY-MM-DD
+        time: data.time,
+        imageUrl: data.imageUrl || "",
+        coordinates: data.coordinates || "",
+      }
+    })
+  } catch (error) {
+    console.error("Error getting locations:", error)
+    return []
+  }
 }
 
 // Get the latest location
 export async function getLatestLocation(): Promise<EventLocation | null> {
-  const locations = await getAllLocations()
+  try {
+    const locationsQuery = query(collection(db, LOCATIONS_COLLECTION), orderBy("date", "desc"))
 
-  if (locations.length === 0) {
+    const snapshot = await getDocs(locationsQuery)
+
+    if (snapshot.empty) {
+      return null
+    }
+
+    const doc = snapshot.docs[0]
+    const data = doc.data()
+
+    return {
+      id: doc.id,
+      name: data.name,
+      address: data.address,
+      date: data.date.toDate().toISOString().split("T")[0],
+      time: data.time,
+      imageUrl: data.imageUrl || "",
+      coordinates: data.coordinates || "",
+    }
+  } catch (error) {
+    console.error("Error getting latest location:", error)
     return null
   }
-
-  // Sort by date (newest first) and return the first one
-  return locations.sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime()
-  })[0]
 }
 
 // Add a new location
 export async function addLocation(location: EventLocation): Promise<void> {
-  if (isFirebaseEnabled) {
-    // Firebase implementation would go here
-    // await addLocationToFirebase(location);
-    throw new Error("Firebase is not yet implemented")
-  }
+  try {
+    // Convert string date to Firestore Timestamp
+    const dateObj = new Date(location.date)
 
-  const data = await readData()
-  data.locations = [...data.locations, location]
-  await writeData(data)
+    await addDoc(collection(db, LOCATIONS_COLLECTION), {
+      name: location.name,
+      address: location.address,
+      date: Timestamp.fromDate(dateObj),
+      time: location.time,
+      imageUrl: location.imageUrl || "",
+      coordinates: location.coordinates || "",
+      createdAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error("Error adding location:", error)
+    throw new Error("Failed to add location")
+  }
 }
 
 // Update an existing location
 export async function updateLocation(updatedLocation: EventLocation): Promise<void> {
-  if (isFirebaseEnabled) {
-    // Firebase implementation would go here
-    // await updateLocationInFirebase(updatedLocation);
-    throw new Error("Firebase is not yet implemented")
-  }
+  try {
+    // Convert string date to Firestore Timestamp
+    const dateObj = new Date(updatedLocation.date)
 
-  const data = await readData()
-  data.locations = data.locations.map((loc: EventLocation) => (loc.id === updatedLocation.id ? updatedLocation : loc))
-  await writeData(data)
+    const locationRef = doc(db, LOCATIONS_COLLECTION, updatedLocation.id)
+
+    await updateDoc(locationRef, {
+      name: updatedLocation.name,
+      address: updatedLocation.address,
+      date: Timestamp.fromDate(dateObj),
+      time: updatedLocation.time,
+      imageUrl: updatedLocation.imageUrl || "",
+      coordinates: updatedLocation.coordinates || "",
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error("Error updating location:", error)
+    throw new Error("Failed to update location")
+  }
 }
 
 // Delete a location
 export async function deleteLocation(id: string): Promise<void> {
-  if (isFirebaseEnabled) {
-    // Firebase implementation would go here
-    // await deleteLocationFromFirebase(id);
-    throw new Error("Firebase is not yet implemented")
+  try {
+    await deleteDoc(doc(db, LOCATIONS_COLLECTION, id))
+  } catch (error) {
+    console.error("Error deleting location:", error)
+    throw new Error("Failed to delete location")
   }
-
-  const data = await readData()
-  data.locations = data.locations.filter((loc: EventLocation) => loc.id !== id)
-  await writeData(data)
 }
-
-// Firebase implementations (to be uncommented when Firebase is enabled)
-/*
-async function getStatusFromFirebase(): Promise<EventStatus> {
-  // Implementation using Firebase
-}
-
-async function updateStatusInFirebase(status: EventStatus): Promise<void> {
-  // Implementation using Firebase
-}
-
-async function getLocationsFromFirebase(): Promise<EventLocation[]> {
-  // Implementation using Firebase
-}
-
-async function addLocationToFirebase(location: EventLocation): Promise<void> {
-  // Implementation using Firebase
-}
-
-async function updateLocationInFirebase(updatedLocation: EventLocation): Promise<void> {
-  // Implementation using Firebase
-}
-
-async function deleteLocationFromFirebase(id: string): Promise<void> {
-  // Implementation using Firebase
-}
-*/

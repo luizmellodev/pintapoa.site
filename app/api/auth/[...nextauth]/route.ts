@@ -1,26 +1,38 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { compare } from "bcrypt"
-
-// In a real application, you would store these in a database
-// For demo purposes, we're using a hardcoded admin user with a hashed password
-// The password is "adminpassword" - you should change this in a real application
-const ADMIN_EMAIL = "admin@example.com"
-const ADMIN_PASSWORD_HASH = "$2b$10$8OxDEuDS7HtWNWfDZ2ZD8uoFRUiAIrJIQRFUHy5RTwSYzpJUp.rdW" // hashed "adminpassword"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { auth } from "@/lib/firebase"
 
 export const authOptions = {
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: "Firebase",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        return {
-          id: "1",
-          email: ADMIN_EMAIL,
-          name: "Admin",
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, credentials.email, credentials.password)
+
+          const user = userCredential.user
+
+          if (!user) {
+            return null
+          }
+
+          return {
+            id: user.uid,
+            email: user.email,
+            name: user.displayName || "Admin",
+          }
+        } catch (error) {
+          console.error("Firebase authentication error:", error)
+          return null
         }
       },
     }),
