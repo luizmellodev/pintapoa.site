@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Paintbrush, ExternalLink } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { motion } from "framer-motion";
+import { Paintbrush, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function ReferenciasPage() {
   return (
@@ -19,7 +19,11 @@ export default function ReferenciasPage() {
             animate={{
               rotate: [0, 5, -5, 5, 0],
             }}
-            transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY, repeatDelay: 5 }}
+            transition={{
+              duration: 5,
+              repeat: Number.POSITIVE_INFINITY,
+              repeatDelay: 5,
+            }}
           >
             <Paintbrush className="h-8 w-8 text-yellow-400 mr-3" />
           </motion.div>
@@ -30,27 +34,42 @@ export default function ReferenciasPage() {
 
         <div className="flex justify-center space-x-4 mb-16">
           <Link href="/">
-            <Button variant="link" className="text-gray-400 hover:text-yellow-400 font-extralight">
+            <Button
+              variant="link"
+              className="text-gray-400 hover:text-yellow-400 font-extralight"
+            >
               INÍCIO
             </Button>
           </Link>
           <Link href="/sobre">
-            <Button variant="link" className="text-gray-400 hover:text-yellow-400 font-extralight">
+            <Button
+              variant="link"
+              className="text-gray-400 hover:text-yellow-400 font-extralight"
+            >
               SOBRE
             </Button>
           </Link>
           <Link href="/expandir">
-            <Button variant="link" className="text-gray-400 hover:text-yellow-400 font-extralight">
+            <Button
+              variant="link"
+              className="text-gray-400 hover:text-yellow-400 font-extralight"
+            >
               EXPANDIR
             </Button>
           </Link>
           <Link href="/estabelecimentos">
-            <Button variant="link" className="text-gray-400 hover:text-yellow-400 font-extralight">
+            <Button
+              variant="link"
+              className="text-gray-400 hover:text-yellow-400 font-extralight"
+            >
               ESTABELECIMENTOS
             </Button>
           </Link>
           <Link href="/playlist">
-            <Button variant="link" className="text-gray-400 hover:text-yellow-400 font-extralight">
+            <Button
+              variant="link"
+              className="text-gray-400 hover:text-yellow-400 font-extralight"
+            >
               PLAYLIST
             </Button>
           </Link>
@@ -68,9 +87,12 @@ export default function ReferenciasPage() {
           className="mb-16"
         >
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-extralight tracking-wider text-yellow-400 mb-4">Referências Visuais</h2>
+            <h2 className="text-4xl font-extralight tracking-wider text-yellow-400 mb-4">
+              Referências Visuais
+            </h2>
             <p className="text-gray-300 font-extralight max-w-lg mx-auto mb-8">
-              Nossa coleção de inspirações no Pinterest para estimular sua criatividade.
+              Nossa coleção de inspirações no Pinterest para estimular sua
+              criatividade.
             </p>
           </div>
 
@@ -85,10 +107,9 @@ export default function ReferenciasPage() {
             </a>
 
             <iframe
-              src="https://www.pinterest.com/pintapoa/_created/"
+              src="https://www.pinterest.com/pintapoa/1-refs/"
               width="100%"
               height="600"
-              frameBorder="0"
               className="rounded"
               title="Pinterest Board"
             ></iframe>
@@ -96,7 +117,7 @@ export default function ReferenciasPage() {
 
           <div className="text-center mt-12">
             <a
-              href="https://pinterest.com/pintapoa"
+              href="https://www.pinterest.com/pintapoa/1-refs/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center bg-transparent hover:bg-red-600/10 text-red-400 border border-red-600/30 rounded-none px-6 py-3 text-base font-light tracking-widest"
@@ -121,5 +142,5 @@ export default function ReferenciasPage() {
         </motion.div>
       </div>
     </main>
-  )
+  );
 }

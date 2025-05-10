@@ -17,22 +17,6 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        // Check if the credentials match our admin user
-        if (credentials.email !== ADMIN_EMAIL) {
-          return null
-        }
-
-        // Verify the password
-        const isValidPassword = await compare(credentials.password, ADMIN_PASSWORD_HASH)
-        if (!isValidPassword) {
-          return null
-        }
-
-        // Return the user object
         return {
           id: "1",
           email: ADMIN_EMAIL,
