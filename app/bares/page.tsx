@@ -1,89 +1,17 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Paintbrush, Mail, Store, Coffee, Calendar } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { useMediaQuery } from "@/hooks/use-media-query"
+import { motion } from "framer-motion";
+import { Mail, Store, Coffee, Calendar } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import Header from "@/components/header";
 
 export default function EstabelecimentosPage() {
-  const isMobile = useMediaQuery("(max-width: 640px)")
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 sm:p-6 md:p-10 bg-black">
       <div className="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto">
-        <motion.div
-          className="flex items-center justify-center mb-6 sm:mb-8"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <motion.div
-            animate={{
-              rotate: [0, 5, -5, 5, 0],
-            }}
-            transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY, repeatDelay: 5 }}
-          >
-            <Paintbrush className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-400 mr-2 sm:mr-3" />
-          </motion.div>
-          <h1 className="text-2xl sm:text-3xl font-extralight tracking-wider yellow-text">
-            PINTA <span className="text-orange-400">POA</span>
-          </h1>
-        </motion.div>
-
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-10 sm:mb-16">
-          <Link href="/">
-            <Button
-              variant="link"
-              size={isMobile ? "sm" : "default"}
-              className="text-gray-400 hover:text-yellow-400 font-extralight"
-            >
-              INÍCIO
-            </Button>
-          </Link>
-          <Link href="/sobre">
-            <Button
-              variant="link"
-              size={isMobile ? "sm" : "default"}
-              className="text-gray-400 hover:text-yellow-400 font-extralight"
-            >
-              SOBRE
-            </Button>
-          </Link>
-          <Link href="/expandir">
-            <Button
-              variant="link"
-              size={isMobile ? "sm" : "default"}
-              className="text-gray-400 hover:text-yellow-400 font-extralight"
-            >
-              EXPANDIR
-            </Button>
-          </Link>
-          <Link href="/estabelecimentos">
-            <Button variant="link" size={isMobile ? "sm" : "default"} className="text-yellow-400 font-extralight">
-              LOCAIS
-            </Button>
-          </Link>
-          <Link href="/playlist">
-            <Button
-              variant="link"
-              size={isMobile ? "sm" : "default"}
-              className="text-gray-400 hover:text-yellow-400 font-extralight"
-            >
-              PLAYLIST
-            </Button>
-          </Link>
-          <Link href="/referencias">
-            <Button
-              variant="link"
-              size={isMobile ? "sm" : "default"}
-              className="text-gray-400 hover:text-yellow-400 font-extralight"
-            >
-              REFS
-            </Button>
-          </Link>
-        </div>
-
+        <Header isMobile={isMobile} />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -100,27 +28,45 @@ export default function EstabelecimentosPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-10 sm:mb-16">
-            <motion.div whileHover={{ y: -5 }} className="border-t-2 border-yellow-400/30 pt-4">
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="border-t-2 border-yellow-400/30 pt-4"
+            >
               <Store className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-400 mb-3 sm:mb-4" />
-              <h3 className="text-lg sm:text-xl font-extralight yellow-text mb-2 sm:mb-3">Visibilidade</h3>
+              <h3 className="text-lg sm:text-xl font-extralight yellow-text mb-2 sm:mb-3">
+                Visibilidade
+              </h3>
               <p className="text-gray-300 font-extralight text-sm sm:text-base">
-                Atraia um novo público para seu estabelecimento e ganhe exposição nas nossas redes sociais.
+                Atraia um novo público para seu estabelecimento e ganhe
+                exposição nas nossas redes sociais.
               </p>
             </motion.div>
 
-            <motion.div whileHover={{ y: -5 }} className="border-t-2 border-emerald-400/30 pt-4">
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="border-t-2 border-emerald-400/30 pt-4"
+            >
               <Coffee className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-400 mb-3 sm:mb-4" />
-              <h3 className="text-lg sm:text-xl font-extralight green-text mb-2 sm:mb-3">Experiência</h3>
+              <h3 className="text-lg sm:text-xl font-extralight green-text mb-2 sm:mb-3">
+                Experiência
+              </h3>
               <p className="text-gray-300 font-extralight text-sm sm:text-base">
-                Ofereça uma experiência única aos seus clientes, combinando arte, gastronomia e socialização.
+                Ofereça uma experiência única aos seus clientes, combinando
+                arte, gastronomia e socialização.
               </p>
             </motion.div>
 
-            <motion.div whileHover={{ y: -5 }} className="border-t-2 border-orange-400/30 pt-4">
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="border-t-2 border-orange-400/30 pt-4"
+            >
               <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-orange-400 mb-3 sm:mb-4" />
-              <h3 className="text-lg sm:text-xl font-extralight orange-text mb-2 sm:mb-3">Flexibilidade</h3>
+              <h3 className="text-lg sm:text-xl font-extralight orange-text mb-2 sm:mb-3">
+                Flexibilidade
+              </h3>
               <p className="text-gray-300 font-extralight text-sm sm:text-base">
-                Escolha as datas e horários que melhor se adequam ao seu estabelecimento para receber nossos eventos.
+                Escolha as datas e horários que melhor se adequam ao seu
+                estabelecimento para receber nossos eventos.
               </p>
             </motion.div>
           </div>
@@ -132,39 +78,52 @@ export default function EstabelecimentosPage() {
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-start">
                 <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-yellow-400/20 flex items-center justify-center mr-3 sm:mr-4 mt-1">
-                  <span className="text-yellow-400 font-light text-sm sm:text-base">1</span>
+                  <span className="text-yellow-400 font-light text-sm sm:text-base">
+                    1
+                  </span>
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-extralight text-yellow-400 mb-1 sm:mb-2">Parceria</h3>
+                  <h3 className="text-base sm:text-lg font-extralight text-yellow-400 mb-1 sm:mb-2">
+                    Parceria
+                  </h3>
                   <p className="text-gray-300 font-extralight text-sm sm:text-base">
-                    Estabelecemos uma parceria onde seu espaço recebe nosso evento e nós trazemos o público.
+                    Estabelecemos uma parceria onde seu espaço recebe nosso
+                    evento e nós trazemos o público.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-400/20 flex items-center justify-center mr-3 sm:mr-4 mt-1">
-                  <span className="text-emerald-400 font-light text-sm sm:text-base">2</span>
+                  <span className="text-emerald-400 font-light text-sm sm:text-base">
+                    2
+                  </span>
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-extralight text-emerald-400 mb-1 sm:mb-2">Organização</h3>
+                  <h3 className="text-base sm:text-lg font-extralight text-emerald-400 mb-1 sm:mb-2">
+                    Organização
+                  </h3>
                   <p className="text-gray-300 font-extralight text-sm sm:text-base">
-                    Nós cuidamos de toda a organização do evento, incluindo materiais de arte, inscrições e divulgação.
+                    Nós cuidamos de toda a organização do evento, incluindo
+                    materiais de arte, inscrições e divulgação.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-orange-400/20 flex items-center justify-center mr-3 sm:mr-4 mt-1">
-                  <span className="text-orange-400 font-light text-sm sm:text-base">3</span>
+                  <span className="text-orange-400 font-light text-sm sm:text-base">
+                    3
+                  </span>
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-extralight text-orange-400 mb-1 sm:mb-2">
                     Benefícios mútuos
                   </h3>
                   <p className="text-gray-300 font-extralight text-sm sm:text-base">
-                    Seu estabelecimento fornece o espaço e o serviço de alimentação, enquanto nós trazemos um público
-                    engajado e uma experiência diferenciada.
+                    Seu estabelecimento fornece o espaço e o serviço de
+                    alimentação, enquanto nós trazemos um público engajado e uma
+                    experiência diferenciada.
                   </p>
                 </div>
               </div>
@@ -178,7 +137,9 @@ export default function EstabelecimentosPage() {
             <ul className="space-y-2 sm:space-y-3">
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full mr-3"></div>
-                <span className="text-gray-300 font-extralight text-sm sm:text-base">Cafeterias e bistrôs</span>
+                <span className="text-gray-300 font-extralight text-sm sm:text-base">
+                  Cafeterias e bistrôs
+                </span>
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full mr-3"></div>
@@ -194,7 +155,9 @@ export default function EstabelecimentosPage() {
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full mr-3"></div>
-                <span className="text-gray-300 font-extralight text-sm sm:text-base">Espaços culturais e galerias</span>
+                <span className="text-gray-300 font-extralight text-sm sm:text-base">
+                  Espaços culturais e galerias
+                </span>
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full mr-3"></div>
@@ -210,8 +173,8 @@ export default function EstabelecimentosPage() {
               ENTRE EM CONTATO
             </h2>
             <p className="text-gray-300 font-extralight mb-6 sm:mb-8 max-w-lg mx-auto text-sm sm:text-base">
-              Interessado em receber o PINTA no seu estabelecimento? Entre em contato conosco para conversarmos sobre as
-              possibilidades.
+              Interessado em receber o PINTA no seu estabelecimento? Entre em
+              contato conosco para conversarmos sobre as possibilidades.
             </p>
             <a
               href="mailto:estabelecimentos@pintapoa.com.br"
@@ -223,5 +186,5 @@ export default function EstabelecimentosPage() {
         </motion.div>
       </div>
     </main>
-  )
+  );
 }

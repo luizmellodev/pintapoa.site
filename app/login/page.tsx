@@ -1,60 +1,55 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { PaintBucket, Lock, Mail } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { motion } from "framer-motion"
-import { useSession } from "next-auth/react"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { PaintBucket, Lock, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { motion } from "framer-motion";
+import { auth } from "@/lib/firebase"; // Importe o auth do seu arquivo firebase
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const { data: session, status } = useSession()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/admin")
-    }
-  }, [status, router])
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push("/admin");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-      })
-
-      if (result?.error) {
-        setError("Email ou senha inválidos")
-        setIsLoading(false)
-        return
-      }
-
-      // Redirect to admin page on successful login
-      router.push("/admin")
-      router.refresh()
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push("/admin");
     } catch (error) {
-      setError("Ocorreu um erro durante o login")
-      setIsLoading(false)
+      setError("Email ou senha inválidos");
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-black">
@@ -76,7 +71,11 @@ export default function LoginPage() {
                 animate={{
                   rotate: [0, 5, -5, 5, 0],
                 }}
-                transition={{ duration: 5, repeat: Number.POSITIVE_INFINITY, repeatDelay: 5 }}
+                transition={{
+                  duration: 5,
+                  repeat: Number.POSITIVE_INFINITY,
+                  repeatDelay: 5,
+                }}
               >
                 <PaintBucket className="h-8 w-8 text-yellow-400 mr-3" />
               </motion.div>
@@ -98,8 +97,13 @@ export default function LoginPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Alert variant="destructive" className="border-red-500/20 bg-red-500/5">
-                  <AlertDescription className="font-extralight">{error}</AlertDescription>
+                <Alert
+                  variant="destructive"
+                  className="border-red-500/20 bg-red-500/5"
+                >
+                  <AlertDescription className="font-extralight">
+                    {error}
+                  </AlertDescription>
                 </Alert>
               </motion.div>
             )}
@@ -110,7 +114,10 @@ export default function LoginPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <Label htmlFor="email" className="text-gray-300 font-extralight">
+                <Label
+                  htmlFor="email"
+                  className="text-gray-300 font-extralight"
+                >
                   Email
                 </Label>
                 <div className="relative">
@@ -132,7 +139,10 @@ export default function LoginPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <Label htmlFor="password" className="text-gray-300 font-extralight">
+                <Label
+                  htmlFor="password"
+                  className="text-gray-300 font-extralight"
+                >
                   Senha
                 </Label>
                 <div className="relative">
@@ -179,5 +189,5 @@ export default function LoginPage() {
         </Card>
       </motion.div>
     </main>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 "use server"
 
 import type { EventLocation, EventStatus } from "./types"
-import { db } from "./firebase"
+import { auth, db } from "./firebase"
 import {
   collection,
   doc,
@@ -107,8 +107,14 @@ export async function getLatestLocation(): Promise<EventLocation | null> {
 }
 
 // Add a new location
-export async function addLocation(location: EventLocation): Promise<void> {
+export async function addLocation(location: Omit<EventLocation, 'id'>): Promise<void> {
   try {
+
+    const user = auth.currentUser
+    if (!user) {
+      throw new Error("User not authenticated")
+    }
+    
     // Convert string date to Firestore Timestamp
     const dateObj = new Date(location.date)
 

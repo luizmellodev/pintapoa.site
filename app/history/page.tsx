@@ -1,32 +1,32 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { MapPin, Calendar, Clock, ArrowLeft, Sparkles } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { getAllLocations } from "@/lib/data"
-import type { EventLocation } from "@/lib/types"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { MapPin, Calendar, Clock, ArrowLeft, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { getAllLocations } from "@/lib/data";
+import type { EventLocation } from "@/lib/types";
 
 export default function HistoryPage() {
-  const [locations, setLocations] = useState<EventLocation[]>([])
-  const [loading, setLoading] = useState(true)
+  const [locations, setLocations] = useState<EventLocation[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        setLoading(true)
-        const allLocations = await getAllLocations()
-        setLocations(allLocations)
+        setLoading(true);
+        const allLocations = await getAllLocations();
+        setLocations(allLocations);
       } catch (error) {
-        console.error("Failed to fetch locations:", error)
+        console.error("Failed to fetch locations:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchLocations()
-  }, [])
+    fetchLocations();
+  }, []);
 
   const container = {
     hidden: { opacity: 0 },
@@ -36,12 +36,12 @@ export default function HistoryPage() {
         staggerChildren: 0.1,
       },
     },
-  }
+  };
 
   const item = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
-  }
+  };
 
   return (
     <main className="flex min-h-screen flex-col p-4 md:p-8 gradient-bg">
@@ -53,11 +53,17 @@ export default function HistoryPage() {
           transition={{ duration: 0.6 }}
         >
           <Link href="/">
-            <Button variant="ghost" size="icon" className="mr-3 hover:bg-pink-500/20 text-white">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="mr-3 hover:bg-pink-500/20 text-white"
+            >
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold gradient-text glow-text">Past Locations</h1>
+          <h1 className="text-2xl font-bold gradient-text glow-text">
+            Past Locations
+          </h1>
         </motion.div>
 
         {loading ? (
@@ -80,7 +86,12 @@ export default function HistoryPage() {
             <p className="text-gray-300">No past locations found.</p>
           </motion.div>
         ) : (
-          <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="space-y-6"
+          >
             {locations.map((location, index) => (
               <motion.div
                 key={location.id}
@@ -90,13 +101,18 @@ export default function HistoryPage() {
               >
                 <div className="relative h-48">
                   <img
-                    src={location.imageUrl || `/placeholder.svg?height=160&width=400`}
+                    src={
+                      location.imageUrl ||
+                      `/placeholder.svg?height=160&width=400`
+                    }
                     alt={location.name}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end">
                     <div className="p-4 text-white">
-                      <h3 className="text-xl font-bold gradient-text glow-text">{location.name}</h3>
+                      <h3 className="text-xl font-bold gradient-text glow-text">
+                        {location.name}
+                      </h3>
                     </div>
                   </div>
                 </div>
@@ -127,5 +143,5 @@ export default function HistoryPage() {
         )}
       </div>
     </main>
-  )
+  );
 }
