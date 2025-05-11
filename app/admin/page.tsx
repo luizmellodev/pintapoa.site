@@ -2,19 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
-import {
-  onAuthStateChanged,
-  signOut as firebaseSignOut,
-  User,
-} from "firebase/auth";
-import {
-  getAllLocations,
-  addLocation,
-  updateLocation,
-  deleteLocation,
-  updateEventStatus,
-} from "@/lib/data";
+import type { User } from "firebase/auth";
+import { userService } from "@/services/userService";
+import { adminService } from "@/services/adminService";
 import type { EventLocation, EventStatus } from "@/lib/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { AdminLayout } from "@/components/admin-layout";
@@ -26,6 +16,44 @@ import {
   AddLocationDialog,
 } from "@/components/admin-dialogs";
 
+// Custom Hook para autenticação
+function useAuth() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const currentUser = await userService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        } else {
+          router.push("/login");
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        router.push("/login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  const handleSignOut = async () => {
+    try {
+      await userService.logout();
+      router.push("/login");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
+  };
+
+  return { user, loading, handleSignOut };
+}
+
 const statusOptions = {
   waiting: "Aguardando",
   active: "Ativo (Mostrar Localização Atual)",
@@ -33,9 +61,21 @@ const statusOptions = {
   ended: "Fim do Projeto",
 };
 
+const initialLocationState: Omit<EventLocation, "id"> = {
+  name: "",
+  address: "",
+  date: "",
+  time: "",
+  imageUrl: "",
+  coordinates: "",
+};
+
 export default function AdminPage() {
+  const { user, loading: authLoading, handleSignOut } = useAuth();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const isMobile = useMediaQuery("(max-width: 640px)");
+
+  // Estados
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<EventLocation[]>([]);
   const [currentStatus, setCurrentStatus] = useState<EventStatus>("waiting");
@@ -45,28 +85,26 @@ export default function AdminPage() {
   const [currentLocation, setCurrentLocation] = useState<EventLocation | null>(
     null
   );
-  const isMobile = useMediaQuery("(max-width: 640px)");
+  const [newLocation, setNewLocation] =
+    useState<Omit<EventLocation, "id">>(initialLocationState);
 
+  // Carregar dados iniciais
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-        fetchData();
-      } else {
-        router.push("/login");
-      }
-      setLoading(false);
-    });
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
-    return () => unsubscribe();
-  }, [router]);
-
+  // Buscar dados
   const fetchData = async () => {
     try {
       setLoading(true);
-      const allLocations = await getAllLocations();
+      const [allLocations, status] = await Promise.all([
+        adminService.getAllLocations(),
+        adminService.getEventStatus(),
+      ]);
       setLocations(allLocations);
-      setCurrentStatus(allLocations.length > 0 ? "active" : "waiting");
+      setCurrentStatus(status);
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -74,24 +112,23 @@ export default function AdminPage() {
     }
   };
 
+  // Handlers
   const handleStatusChange = async (status: EventStatus) => {
     try {
-      await updateEventStatus(status);
+      await adminService.updateEventStatus(status);
       setCurrentStatus(status);
     } catch (error) {
       console.error("Failed to update status:", error);
     }
   };
 
-  const handleAddLocation = async (newLocation: Omit<EventLocation, "id">) => {
+  const handleAddLocation = async () => {
+    console.log("Adding location:", newLocation);
     try {
-      if (!auth.currentUser) {
-        console.error("User is not authenticated");
-        return;
-      }
-
-      await addLocation(newLocation);
+      await adminService.addLocation(newLocation);
+      console.log("Location added successfully");
       setIsAddDialogOpen(false);
+      setNewLocation(initialLocationState);
       fetchData();
     } catch (error) {
       console.error("Failed to add location:", error);
@@ -105,7 +142,7 @@ export default function AdminPage() {
 
   const handleUpdateLocation = async (updatedLocation: EventLocation) => {
     try {
-      await updateLocation(updatedLocation);
+      await adminService.updateLocation(updatedLocation);
       setIsEditDialogOpen(false);
       fetchData();
     } catch (error) {
@@ -121,7 +158,7 @@ export default function AdminPage() {
   const handleDeleteLocation = async () => {
     try {
       if (currentLocation) {
-        await deleteLocation(currentLocation.id);
+        await adminService.deleteLocation(currentLocation.id);
         setIsDeleteDialogOpen(false);
         fetchData();
       }
@@ -130,16 +167,8 @@ export default function AdminPage() {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-      router.push("/login");
-    } catch (error) {
-      console.error("Failed to sign out:", error);
-    }
-  };
-
-  if (loading) {
+  // Loading state
+  if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
         <div className="w-8 h-8 rounded-full border-2 border-yellow-400/20 border-t-yellow-400 animate-spin"></div>
@@ -147,10 +176,12 @@ export default function AdminPage() {
     );
   }
 
+  // Not authenticated
   if (!user) {
     return null;
   }
 
+  // Main render
   return (
     <AdminLayout onSignOut={handleSignOut}>
       <StatusCard
@@ -169,7 +200,9 @@ export default function AdminPage() {
       <AddLocationDialog
         isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
-        onAdd={handleAddLocation}
+        action={handleAddLocation}
+        location={newLocation}
+        setLocation={setNewLocation}
         isMobile={isMobile}
       />
       {currentLocation && (

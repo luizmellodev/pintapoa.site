@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PaintBucket, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,8 +16,8 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion } from "framer-motion";
-import { auth } from "@/lib/firebase"; // Importe o auth do seu arquivo firebase
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { userService } from "@/services/userService";
+import { FirebaseError } from "firebase/app";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,9 +27,9 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = userService.onAuthStateChanged((user) => {
       if (user) {
-        router.push("/admin");
+        router.replace("/admin");
       }
     });
 
@@ -43,11 +42,32 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/admin");
-    } catch (error) {
-      setError("Email ou senha inválidos");
+      const user = await userService.login(email, password);
+      if (user) {
+        router.replace("/admin");
+      }
+    } catch (error: unknown) {
       setIsLoading(false);
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case "auth/invalid-email":
+            setError("Email inválido");
+            break;
+          case "auth/user-disabled":
+            setError("Usuário desabilitado");
+            break;
+          case "auth/user-not-found":
+            setError("Usuário não encontrado");
+            break;
+          case "auth/wrong-password":
+            setError("Senha incorreta");
+            break;
+          default:
+            setError("Erro ao fazer login. Tente novamente.");
+        }
+      } else {
+        setError("Erro ao fazer login. Tente novamente.");
+      }
     }
   };
 
