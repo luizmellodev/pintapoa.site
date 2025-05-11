@@ -1,10 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { User } from "firebase/auth";
-import { userService } from "@/services/userService";
-import { adminService } from "@/services/adminService";
+import { useAuth } from "@/contexts/auth-context";
+import {
+  getAllLocations,
+  updateEventStatus,
+  addLocation,
+  updateLocation,
+  deleteLocation,
+  getEventStatus,
+} from "@/services/adminService"; // Mantendo o caminho correto
 import type { EventLocation, EventStatus } from "@/lib/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { AdminLayout } from "@/components/admin-layout";
@@ -15,44 +21,6 @@ import {
   DeleteLocationDialog,
   AddLocationDialog,
 } from "@/components/admin-dialogs";
-
-// Custom Hook para autenticação
-function useAuth() {
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const currentUser = await userService.getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-        } else {
-          router.push("/login");
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        router.push("/login");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
-
-  const handleSignOut = async () => {
-    try {
-      await userService.logout();
-      router.push("/login");
-    } catch (error) {
-      console.error("Failed to sign out:", error);
-    }
-  };
-
-  return { user, loading, handleSignOut };
-}
 
 const statusOptions = {
   waiting: "Aguardando",
@@ -71,7 +39,7 @@ const initialLocationState: Omit<EventLocation, "id"> = {
 };
 
 export default function AdminPage() {
-  const { user, loading: authLoading, handleSignOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 640px)");
 
@@ -88,6 +56,11 @@ export default function AdminPage() {
   const [newLocation, setNewLocation] =
     useState<Omit<EventLocation, "id">>(initialLocationState);
 
+  // Adicionar useEffect para logar quando o estado locations muda
+  useEffect(() => {
+    console.log("AdminPage - Estado locations atualizado:", locations);
+  }, [locations]);
+
   // Carregar dados iniciais
   useEffect(() => {
     if (user) {
@@ -97,25 +70,36 @@ export default function AdminPage() {
 
   // Buscar dados
   const fetchData = async () => {
+    console.log("Iniciando fetchData");
     try {
       setLoading(true);
-      const [allLocations, status] = await Promise.all([
-        adminService.getAllLocations(),
-        adminService.getEventStatus(),
-      ]);
+
+      // Buscar localizações e status separadamente para melhor depuração
+      console.log("Buscando localizações...");
+      const allLocations = await getAllLocations();
+      console.log("Localizações recebidas:", allLocations);
+
+      console.log("Buscando status...");
+      const status = await getEventStatus();
+      console.log("Status recebido:", status);
+
+      // Atualizar o estado com os dados recebidos
       setLocations(allLocations);
       setCurrentStatus(status);
     } catch (error) {
-      console.error("Failed to fetch data:", error);
+      console.error("Erro ao buscar dados:", error);
+      setLocations([]);
     } finally {
       setLoading(false);
+      // Usar o valor atualizado diretamente, não o estado que pode não ter sido atualizado ainda
+      console.log("fetchData concluído. Loading:", false);
     }
   };
 
-  // Handlers
+  // Atualizar os handlers para usar as funções importadas diretamente
   const handleStatusChange = async (status: EventStatus) => {
     try {
-      await adminService.updateEventStatus(status);
+      await updateEventStatus(status); // Chamar função diretamente
       setCurrentStatus(status);
     } catch (error) {
       console.error("Failed to update status:", error);
@@ -123,15 +107,15 @@ export default function AdminPage() {
   };
 
   const handleAddLocation = async () => {
-    console.log("Adding location:", newLocation);
+    console.log("Tentando adicionar localização:", newLocation);
     try {
-      await adminService.addLocation(newLocation);
-      console.log("Location added successfully");
+      await addLocation(newLocation);
+      console.log("Localização adicionada com sucesso");
       setIsAddDialogOpen(false);
       setNewLocation(initialLocationState);
-      fetchData();
+      await fetchData(); // Recarregar os dados
     } catch (error) {
-      console.error("Failed to add location:", error);
+      console.error("Erro ao adicionar localização:", error);
     }
   };
 
@@ -142,7 +126,7 @@ export default function AdminPage() {
 
   const handleUpdateLocation = async (updatedLocation: EventLocation) => {
     try {
-      await adminService.updateLocation(updatedLocation);
+      await updateLocation(updatedLocation); // Chamar função diretamente
       setIsEditDialogOpen(false);
       fetchData();
     } catch (error) {
@@ -158,7 +142,7 @@ export default function AdminPage() {
   const handleDeleteLocation = async () => {
     try {
       if (currentLocation) {
-        await adminService.deleteLocation(currentLocation.id);
+        await deleteLocation(currentLocation.id); // Chamar função diretamente
         setIsDeleteDialogOpen(false);
         fetchData();
       }
@@ -167,8 +151,18 @@ export default function AdminPage() {
     }
   };
 
+  // Atualizar o handler de logout
+  const handleSignOut = async () => {
+    try {
+      await signOut(); // Usar a função do contexto
+      router.push("/login");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
+  };
+
   // Loading state
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black">
         <div className="w-8 h-8 rounded-full border-2 border-yellow-400/20 border-t-yellow-400 animate-spin"></div>
@@ -178,8 +172,13 @@ export default function AdminPage() {
 
   // Not authenticated
   if (!user) {
+    router.push("/login");
     return null;
   }
+
+  // Verificar se locations é um array válido antes de renderizar
+  const validLocations = Array.isArray(locations) ? locations : [];
+  console.log("AdminPage - Renderizando com validLocations:", validLocations);
 
   // Main render
   return (
@@ -189,14 +188,28 @@ export default function AdminPage() {
         onStatusChange={handleStatusChange}
         statusOptions={statusOptions}
       />
+
+      {/* Adicionar um log para depuração */}
+      <div className="hidden">
+        {(() => {
+          console.log("Renderizando LocationList com:", {
+            locations: validLocations,
+            loading,
+            locationsCount: validLocations.length,
+          });
+          return null;
+        })()}
+      </div>
+
       <LocationList
-        locations={locations}
+        locations={validLocations}
         loading={loading}
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         onAdd={() => setIsAddDialogOpen(true)}
         isMobile={isMobile}
       />
+
       <AddLocationDialog
         isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
@@ -205,6 +218,7 @@ export default function AdminPage() {
         setLocation={setNewLocation}
         isMobile={isMobile}
       />
+
       {currentLocation && (
         <>
           <EditLocationDialog

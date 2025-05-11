@@ -1,30 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { LocationCard } from "./admin-location-card";
-import type { EventLocation } from "@/lib/types";
-import { CustomLoading } from "@/components/loading";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
+  PlusCircle,
+  MapPin,
+  Calendar,
+  Clock,
+  Compass,
+  Edit,
+  Trash2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { EventLocation } from "@/lib/types";
+import { useEffect } from "react";
 
 interface LocationListProps {
   locations: EventLocation[];
   loading: boolean;
   onEdit: (location: EventLocation) => void;
   onDelete: (location: EventLocation) => void;
-  onAdd: (location: Omit<EventLocation, "id">) => void;
+  onAdd: () => void;
   isMobile?: boolean;
 }
 
@@ -36,53 +31,41 @@ export function LocationList({
   onAdd,
   isMobile = false,
 }: LocationListProps) {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<Omit<EventLocation, "id">>({
-    name: "",
-    address: "",
-    date: "",
-    time: "",
-    imageUrl: "",
-    coordinates: "",
+  // Adicionar useEffect para logar quando o componente recebe novas props
+  useEffect(() => {
+    console.log("LocationList - Props atualizadas:", {
+      loading,
+      locationsCount: locations?.length || 0,
+      locations,
+    });
+  }, [locations, loading]);
+
+  console.log("LocationList - Renderizando com:", {
+    loading,
+    locationsCount: locations?.length || 0,
+    locations,
+    isArray: Array.isArray(locations),
+    firstItem: locations && locations.length > 0 ? locations[0] : null,
   });
 
   const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.1 },
+      transition: {
+        staggerChildren: 0.1,
+      },
     },
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
   };
 
-  const handleSubmit = () => {
-    if (
-      !formData.name ||
-      !formData.address ||
-      !formData.date ||
-      !formData.time
-    ) {
-      alert("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
-
-    onAdd(formData);
-    setIsAddDialogOpen(false);
-    setFormData({
-      name: "",
-      address: "",
-      date: "",
-      time: "",
-      imageUrl: "",
-      coordinates: "",
-    });
-  };
+  // Verificação mais detalhada para depuração
+  const hasLocations = Array.isArray(locations) && locations.length > 0;
+  console.log("LocationList - hasLocations:", hasLocations);
 
   return (
     <div className="space-y-6">
@@ -96,137 +79,13 @@ export function LocationList({
           GERENCIAR LOCALIZAÇÕES
         </motion.h2>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-transparent hover:bg-emerald-400/10 text-emerald-400 border border-emerald-400/30 rounded-none font-extralight tracking-wider">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                {isMobile ? "NOVO" : "ADICIONAR LOCAL"}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] glass border-yellow-400/10">
-              <DialogHeader>
-                <DialogTitle className="text-yellow-400 text-xl font-extralight tracking-wide">
-                  Adicionar Novo Local
-                </DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="name"
-                    className="text-gray-300 font-extralight"
-                  >
-                    Nome do Local
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="ex: Parque Ibirapuera"
-                    className="bg-black/50 border-white/10 focus:border-yellow-400/50 text-white font-extralight"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="address"
-                    className="text-gray-300 font-extralight"
-                  >
-                    Endereço
-                  </Label>
-                  <Textarea
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Endereço completo"
-                    rows={2}
-                    className="bg-black/50 border-white/10 focus:border-yellow-400/50 text-white font-extralight"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label
-                      htmlFor="date"
-                      className="text-gray-300 font-extralight"
-                    >
-                      Data
-                    </Label>
-                    <Input
-                      id="date"
-                      name="date"
-                      type="date"
-                      value={formData.date}
-                      onChange={handleInputChange}
-                      className="bg-black/50 border-white/10 focus:border-yellow-400/50 text-white font-extralight"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label
-                      htmlFor="time"
-                      className="text-gray-300 font-extralight"
-                    >
-                      Horário
-                    </Label>
-                    <Input
-                      id="time"
-                      name="time"
-                      value={formData.time}
-                      onChange={handleInputChange}
-                      placeholder="ex: 14:00 - 17:00"
-                      className="bg-black/50 border-white/10 focus:border-yellow-400/50 text-white font-extralight"
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="coordinates"
-                    className="text-gray-300 font-extralight"
-                  >
-                    Coordenadas (opcional)
-                  </Label>
-                  <Input
-                    id="coordinates"
-                    name="coordinates"
-                    value={formData.coordinates}
-                    onChange={handleInputChange}
-                    placeholder='ex: 23°35"08.5"S 46°39"32.6"W'
-                    className="bg-black/50 border-white/10 focus:border-yellow-400/50 text-white font-extralight font-mono"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="imageUrl"
-                    className="text-gray-300 font-extralight"
-                  >
-                    URL da Imagem (opcional)
-                  </Label>
-                  <Input
-                    id="imageUrl"
-                    name="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={handleInputChange}
-                    placeholder="https://exemplo.com/imagem.jpg"
-                    className="bg-black/50 border-white/10 focus:border-yellow-400/50 text-white font-extralight"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsAddDialogOpen(false)}
-                  className="bg-transparent hover:bg-white/5 text-gray-300 border border-white/10 rounded-none font-extralight"
-                >
-                  CANCELAR
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  className="bg-transparent hover:bg-emerald-400/10 text-emerald-400 border border-emerald-400/30 rounded-none font-extralight tracking-wider"
-                >
-                  ADICIONAR
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button
+            onClick={onAdd}
+            className="bg-transparent hover:bg-emerald-400/10 text-emerald-400 border border-emerald-400/30 rounded-none font-extralight tracking-wider"
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />{" "}
+            {isMobile ? "NOVO" : "ADICIONAR LOCAL"}
+          </Button>
         </motion.div>
       </div>
 
@@ -236,9 +95,9 @@ export function LocationList({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          <CustomLoading />
+          <div className="w-8 h-8 rounded-full border-2 border-yellow-400/20 border-t-yellow-400 animate-spin"></div>
         </motion.div>
-      ) : locations.length === 0 ? (
+      ) : !hasLocations ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -255,14 +114,80 @@ export function LocationList({
           animate="show"
           className="space-y-4 sm:space-y-6"
         >
-          {locations.map((location) => (
-            <LocationCard
-              key={location.id}
-              location={location}
-              onEdit={() => onEdit(location)}
-              onDelete={() => onDelete(location)}
-            />
-          ))}
+          {locations.map((location) => {
+            console.log("Renderizando localização:", location);
+            return (
+              <motion.div
+                key={location.id}
+                variants={item}
+                className="border-l-2 border-emerald-400/30 pl-3 sm:pl-4 py-1"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="mb-4 sm:mb-0">
+                    <h3 className="text-base sm:text-lg font-extralight green-text mb-2">
+                      {location.name}
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex items-start">
+                        <MapPin className="h-4 w-4 text-orange-400 mr-2 mt-1 flex-shrink-0" />
+                        <p className="text-gray-400 font-extralight text-xs sm:text-sm">
+                          {location.address}
+                        </p>
+                      </div>
+                      <div className="flex items-start">
+                        <Calendar className="h-4 w-4 text-yellow-400 mr-2 mt-1 flex-shrink-0" />
+                        <p className="text-gray-400 font-extralight text-xs sm:text-sm">
+                          {new Date(location.date).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                      <div className="flex items-start">
+                        <Clock className="h-4 w-4 text-emerald-400 mr-2 mt-1 flex-shrink-0" />
+                        <p className="text-gray-400 font-extralight text-xs sm:text-sm">
+                          {location.time}
+                        </p>
+                      </div>
+                      {location.coordinates && (
+                        <div className="flex items-start">
+                          <Compass className="h-4 w-4 text-orange-400 mr-2 mt-1 flex-shrink-0" />
+                          <p className="text-gray-400 font-extralight text-xs sm:text-sm font-mono">
+                            {location.coordinates}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex space-x-3">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEdit(location)}
+                        className="bg-transparent hover:bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 rounded-none font-extralight tracking-wider"
+                      >
+                        <Edit className="h-4 w-4 mr-1" /> EDITAR
+                      </Button>
+                    </motion.div>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => onDelete(location)}
+                        className="bg-transparent hover:bg-red-500/10 text-red-400 border border-red-500/30 rounded-none font-extralight tracking-wider"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> EXCLUIR
+                      </Button>
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </motion.div>
       )}
     </div>

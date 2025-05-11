@@ -1,14 +1,13 @@
 export type EventStatus = "waiting" | "active" | "see-you-soon" | "ended"
 export interface EventLocation {
-  id: string;
-  name: string;
-  address: string;
-  date: string;
-  time: string;
-  imageUrl?: string;
-  coordinates?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  id: string
+  name: string
+  address: string
+  date: string
+  time: string
+  imageUrl?: string
+  coordinates?: string
+  description?: string
 }
 
 // Tipos para props de componentes
@@ -30,12 +29,6 @@ export interface LocationListProps {
   loading: boolean;
   onEdit: (location: EventLocation) => void;
   onDelete: (location: EventLocation) => void;
-}
-
-export interface LocationCardProps {
-  location: EventLocation;
-  onEdit: () => void;
-  onDelete: () => void;
 }
 
 // Tipos para os diálogos
@@ -146,4 +139,15 @@ export interface ValidationError {
 
 export interface FormErrors {
   [key: string]: string[];
+}
+
+export interface Location {
+  id: string
+  name: string
+  address: string
+  phone: string
+  email: string
+  description: string
+  date: string
+  time: string
 }

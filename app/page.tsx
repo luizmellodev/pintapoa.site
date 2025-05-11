@@ -2,10 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Clock, Calendar, Paintbrush, MapIcon } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  Calendar,
+  Paintbrush,
+  MapIcon,
+  HourglassIcon,
+  HeartIcon,
+  XCircleIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { EventLocation, EventStatus } from "@/lib/types";
-import { getEventStatus, getLatestLocation, getAllLocations } from "@/lib/data";
+import { getEventStatus } from "@/services/adminService";
+import {
+  getLatestLocation,
+  getPastLocations,
+} from "@/services/locationService";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import Header from "@/components/header";
 
@@ -22,19 +35,18 @@ export default function Home() {
       try {
         setLoading(true);
         const currentStatus = await getEventStatus();
+        console.log("Status atual:", currentStatus);
         setStatus(currentStatus);
 
-        if (currentStatus === "active") {
-          const latestLocation = await getLatestLocation();
-          if (latestLocation) setLocation(latestLocation);
+        // Buscar a localização mais recente independente do status
+        const latestLocation = await getLatestLocation();
+        if (latestLocation) setLocation(latestLocation);
+        console.log("Localização mais recente:", latestLocation);
 
-          const allLocations = await getAllLocations();
-          // Filter out the latest location from past locations
-          const past = allLocations.filter(
-            (loc) => loc.id !== latestLocation?.id
-          );
-          setPastLocations(past);
-        }
+        // Buscar localizações anteriores
+        const past = await getPastLocations(5);
+        setPastLocations(past);
+        console.log("Localizações anteriores:", past);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -49,31 +61,73 @@ export default function Home() {
     setRevealStage(1);
     // Progress through reveal stages
     const timer1 = setTimeout(() => setRevealStage(2), 3000);
-    const timer2 = setTimeout(() => setRevealStage(3), 6000);
 
     return () => {
       clearTimeout(timer1);
-      clearTimeout(timer2);
     };
   };
 
-  return (
-    <main className="flex min-h-screen flex-col items-center p-4 sm:p-6 md:p-10 bg-black">
-      <Header isMobile={isMobile} />
-      <div className="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto">
-        {loading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="w-8 h-8 rounded-full border-2 border-yellow-400/20 border-t-yellow-400 animate-spin"></div>
-          </div>
-        ) : (
-          <>
-            {status === "active" && location && (
+  // Renderizar conteúdo com base no status
+  const renderStatusContent = () => {
+    switch (status) {
+      case "waiting":
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-12 sm:mb-20"
+          >
+            <div className="text-center">
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="mb-12 sm:mb-20"
+                animate={{ y: [0, -5, 0] }}
+                transition={{
+                  duration: 3,
+                  repeat: Number.POSITIVE_INFINITY,
+                }}
+                className="mb-6 sm:mb-8"
               >
+                <HourglassIcon className="h-12 w-12 sm:h-16 sm:w-16 text-yellow-400 mx-auto" />
+              </motion.div>
+              <h2 className="text-xl sm:text-2xl font-extralight mb-6 sm:mb-8 tracking-wide yellow-text">
+                Aguardando próxima revelação...
+              </h2>
+              <p className="text-gray-300 font-extralight mb-8 max-w-md mx-auto">
+                Estamos preparando uma nova localização para o próximo evento.
+                Fique atento às nossas redes sociais para não perder a
+                revelação!
+              </p>
+              <motion.a
+                href="https://instagram.com/pintapoa"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center bg-transparent hover:bg-pink-600/10 text-pink-400 border border-pink-600/30 rounded-none px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-light tracking-widest"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <img
+                  src="/icons/instagram-icon.svg"
+                  alt="Instagram"
+                  width={isMobile ? 20 : 24}
+                  height={isMobile ? 20 : 24}
+                  className="mr-2 hover:opacity-80 transition-opacity"
+                />{" "}
+                SEGUIR NO INSTAGRAM
+              </motion.a>
+            </div>
+          </motion.div>
+        );
+
+      case "active":
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-12 sm:mb-20"
+          >
+            {location && (
+              <>
                 {revealStage === 0 ? (
                   <div className="text-center">
                     <motion.div
@@ -122,46 +176,6 @@ export default function Home() {
                     )}
 
                     {revealStage === 2 && (
-                      <div className="text-center space-y-8">
-                        <div className="reveal-container">
-                          <h2 className="text-2xl sm:text-3xl font-extralight green-text tracking-wider">
-                            {location.name}
-                          </h2>
-                          <div className="reveal-overlay"></div>
-                        </div>
-
-                        <div className="space-y-4 max-w-md mx-auto">
-                          <div className="fade-in flex items-start">
-                            <MapPin className="h-5 w-5 text-orange-400 mr-3 mt-1 flex-shrink-0" />
-                            <p className="text-left text-gray-300 font-extralight">
-                              {location.address}
-                            </p>
-                          </div>
-                          <div className="fade-in-delay-1 flex items-start">
-                            <Calendar className="h-5 w-5 text-yellow-400 mr-3 mt-1 flex-shrink-0" />
-                            <p className="text-left text-gray-300 font-extralight">
-                              {new Date(location.date).toLocaleDateString(
-                                "pt-BR",
-                                {
-                                  weekday: "long",
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                }
-                              )}
-                            </p>
-                          </div>
-                          <div className="fade-in-delay-2 flex items-start">
-                            <Clock className="h-5 w-5 text-emerald-400 mr-3 mt-1 flex-shrink-0" />
-                            <p className="text-left text-gray-300 font-extralight">
-                              {location.time}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {revealStage === 3 && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -245,17 +259,135 @@ export default function Home() {
                               height={isMobile ? 20 : 24}
                               className="mr-2 hover:opacity-80 transition-opacity"
                             />{" "}
-                            COMPRAR NO INSTAGRAM
+                            Envie uma mensagem!
                           </motion.a>
                         </motion.div>
                       </motion.div>
                     )}
                   </div>
                 )}
-              </motion.div>
+              </>
             )}
+          </motion.div>
+        );
 
-            {/* Past Locations Section */}
+      case "see-you-soon":
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-12 sm:mb-20"
+          >
+            <div className="text-center">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0, -5, 0] }}
+                transition={{
+                  duration: 4,
+                  repeat: Number.POSITIVE_INFINITY,
+                  repeatDelay: 2,
+                }}
+                className="mb-6 sm:mb-8"
+              >
+                <HeartIcon className="h-12 w-12 sm:h-16 sm:w-16 text-pink-400 mx-auto" />
+              </motion.div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extralight mb-4 sm:mb-6 tracking-wide yellow-text">
+                Até Breve!
+              </h2>
+              <p className="text-gray-300 font-extralight mb-8 max-w-md mx-auto">
+                Estamos preparando novidades incríveis para o próximo evento.
+                Fique ligado em nossas redes sociais para ser o primeiro a saber
+                quando voltarmos!
+              </p>
+              <motion.a
+                href="https://instagram.com/pintapoa"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center bg-transparent hover:bg-pink-600/10 text-pink-400 border border-pink-600/30 rounded-none px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-light tracking-widest"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <img
+                  src="/icons/instagram-icon.svg"
+                  alt="Instagram"
+                  width={isMobile ? 20 : 24}
+                  height={isMobile ? 20 : 24}
+                  className="mr-2 hover:opacity-80 transition-opacity"
+                />{" "}
+                SEGUIR NO INSTAGRAM
+              </motion.a>
+            </div>
+          </motion.div>
+        );
+
+      case "ended":
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-12 sm:mb-20"
+          >
+            <div className="text-center">
+              <motion.div
+                animate={{ rotate: [0, 360] }}
+                transition={{
+                  duration: 20,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "linear",
+                }}
+                className="mb-6 sm:mb-8"
+              >
+                <XCircleIcon className="h-12 w-12 sm:h-16 sm:w-16 text-orange-400 mx-auto" />
+              </motion.div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extralight mb-4 sm:mb-6 tracking-wide yellow-text">
+                Projeto Finalizado
+              </h2>
+              <p className="text-gray-300 font-extralight mb-8 max-w-md mx-auto">
+                O PINTA POA chegou ao fim. Agradecemos a todos que participaram
+                e fizeram parte desta jornada artística incrível. Fique atento
+                para futuros projetos!
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <motion.a
+                  href="https://instagram.com/pintapoa"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center bg-transparent hover:bg-pink-600/10 text-pink-400 border border-pink-600/30 rounded-none px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-light tracking-widest"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <img
+                    src="/icons/instagram-icon.svg"
+                    alt="Instagram"
+                    width={isMobile ? 20 : 24}
+                    height={isMobile ? 20 : 24}
+                    className="mr-2 hover:opacity-80 transition-opacity"
+                  />{" "}
+                  VER NOSSA HISTÓRIA!
+                </motion.a>
+              </div>
+            </div>
+          </motion.div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <main className="flex min-h-screen flex-col items-center p-4 sm:p-6 md:p-10 bg-black">
+      <Header isMobile={isMobile} />
+      <div className="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto">
+        {loading ? (
+          <div className="flex justify-center items-center h-60">
+            <div className="w-8 h-8 rounded-full border-2 border-yellow-400/20 border-t-yellow-400 animate-spin"></div>
+          </div>
+        ) : (
+          <>
+            {renderStatusContent()}
+
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

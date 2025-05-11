@@ -1,21 +1,22 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings } from "lucide-react";
 import { motion } from "framer-motion";
+import { Settings } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { EventStatus } from "@/lib/types";
-
-const statusOptions = {
-  waiting: "Aguardando",
-  active: "Ativo (Mostrar Localização Atual)",
-  "see-you-soon": "Até Breve",
-  ended: "Fim do Projeto",
-};
 
 interface StatusCardProps {
   currentStatus: EventStatus;
   onStatusChange: (status: EventStatus) => void;
-  statusOptions: Record<EventStatus, string>;
+  statusOptions: Record<string, string>;
 }
 
 export function StatusCard({
@@ -36,30 +37,29 @@ export function StatusCard({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
-            {Object.entries(statusOptions).map(([key, label]) => (
-              <label
-                key={key}
-                className="flex items-center space-x-2 w-full text-left cursor-pointer"
-              >
-                <input
-                  type="radio"
-                  name="eventStatus"
-                  value={key}
-                  checked={currentStatus === key}
-                  onChange={() => onStatusChange(key as EventStatus)}
-                  className="hidden"
-                />
-                <div
-                  className={`w-4 h-4 rounded-full border-2 ${
-                    currentStatus === key
-                      ? "bg-yellow-400 border-yellow-400"
-                      : "border-gray-400"
-                  }`}
-                />
-                <span className="text-sm text-gray-200">{label}</span>
-              </label>
-            ))}
+          <div className="grid gap-2">
+            <Label className="text-gray-300 font-extralight">
+              Status Atual:{" "}
+              <span className="text-orange-400">
+                {statusOptions[currentStatus]}
+              </span>
+            </Label>
+            <Select
+              value={currentStatus}
+              onValueChange={(value) => onStatusChange(value as EventStatus)}
+            >
+              <SelectTrigger className="bg-black/50 border-white/10 focus:ring-yellow-400/30 font-extralight">
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent className="glass border-yellow-400/10">
+                <SelectItem value="waiting">{statusOptions.waiting}</SelectItem>
+                <SelectItem value="active">{statusOptions.active}</SelectItem>
+                <SelectItem value="see-you-soon">
+                  {statusOptions["see-you-soon"]}
+                </SelectItem>
+                <SelectItem value="ended">{statusOptions.ended}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

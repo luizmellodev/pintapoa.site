@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import type React from "react";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PaintBucket, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,60 +18,59 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion } from "framer-motion";
-import { userService } from "@/services/userService";
-import { FirebaseError } from "firebase/app";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user, loading, signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Redirecionar se já estiver logado
   useEffect(() => {
-    const unsubscribe = userService.onAuthStateChanged((user) => {
-      if (user) {
+    if (user && !loading) {
+      console.log("Usuário autenticado, redirecionando...");
+      try {
         router.replace("/admin");
+      } catch (error) {
+        console.error(error);
       }
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+    }
+  }, [user, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log("Entrando no handleSubmit");
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
     try {
-      const user = await userService.login(email, password);
-      if (user) {
-        router.replace("/admin");
+      if (!email || !password) {
+        setError("Email e senha são obrigatórios");
+        return;
       }
-    } catch (error: unknown) {
+      await signIn(email, password);
+      console.log("Login realizado com sucesso");
+      // Redirecionar para a página de administração
+      console.log("Redirecionando para /admin");
+
+      router.replace("/admin");
+    } catch (error: any) {
+      setError(error.message ?? "Email ou senha inválidos");
+    } finally {
       setIsLoading(false);
-      if (error instanceof FirebaseError) {
-        switch (error.code) {
-          case "auth/invalid-email":
-            setError("Email inválido");
-            break;
-          case "auth/user-disabled":
-            setError("Usuário desabilitado");
-            break;
-          case "auth/user-not-found":
-            setError("Usuário não encontrado");
-            break;
-          case "auth/wrong-password":
-            setError("Senha incorreta");
-            break;
-          default:
-            setError("Erro ao fazer login. Tente novamente.");
-        }
-      } else {
-        setError("Erro ao fazer login. Tente novamente.");
-      }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <div className="w-8 h-8 rounded-full border-2 border-yellow-400/20 border-t-yellow-400 animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-black">

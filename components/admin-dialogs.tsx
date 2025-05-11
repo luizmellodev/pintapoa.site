@@ -1,25 +1,27 @@
 "use client";
 
-import { EventLocation } from "@/lib/types";
+import type React from "react";
+
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "./ui/dialog";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
-import { Label } from "./ui/label";
-import { JSX, useState, ReactNode } from "react";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import type { EventLocation } from "@/lib/types";
 import { motion } from "framer-motion";
 
 interface BaseDialogProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  children: ReactNode;
+  children: React.ReactNode;
   onConfirm: () => void;
   confirmText: string;
   confirmClass?: string;
@@ -70,7 +72,7 @@ function BaseDialog({
 }
 
 interface LocationFormProps {
-  location: Omit<EventLocation, "id">;
+  location: Omit<EventLocation, "id"> | EventLocation;
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
@@ -185,19 +187,30 @@ export function AddLocationDialog({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    console.log(`Campo alterado: ${name} = ${value}`);
     setLocation((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = () => {
+    console.log("Tentando enviar formulário com dados:", location);
+
     if (
       !location.name ||
       !location.address ||
       !location.date ||
       !location.time
     ) {
+      console.error("Campos obrigatórios faltando:", {
+        name: !!location.name,
+        address: !!location.address,
+        date: !!location.date,
+        time: !!location.time,
+      });
       alert("Por favor, preencha todos os campos obrigatórios");
       return;
     }
+
+    console.log("Chamando action para adicionar localização");
     action();
   };
 
@@ -229,7 +242,7 @@ export function EditLocationDialog({
   onClose,
   location,
   onSave,
-}: EditLocationDialogProps): JSX.Element {
+}: EditLocationDialogProps) {
   const [formData, setFormData] = useState(location);
 
   const handleInputChange = (
@@ -281,7 +294,7 @@ export function DeleteLocationDialog({
   onClose,
   location,
   onConfirm,
-}: DeleteLocationDialogProps): JSX.Element {
+}: DeleteLocationDialogProps) {
   const handleConfirm = async () => {
     await onConfirm();
     onClose();
